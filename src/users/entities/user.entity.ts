@@ -9,14 +9,14 @@ import {
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 255, unique: true })
   username: string;
 
   @Exclude()
-  @Column()
+  @Column({ type: 'varchar', length: 255 })
   password: string;
 
   @UpdateDateColumn()
@@ -24,4 +24,8 @@ export class User {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  constructor(partial: Partial<User>) {
+    Object.assign(this, partial);
+  }
 }
