@@ -8,6 +8,8 @@ import {
   Delete,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,6 +21,8 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { JWTAuthGuard } from 'src/auth/jwt-auth.guard';
+import { User } from './entities/user.entity';
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiBasicAuth()
 @ApiTags('users')
@@ -48,17 +52,23 @@ export class UsersController {
     return this.usersService.findOne(+id);
   }
 
+  @UseGuards(JWTAuthGuard)
   @Patch(':id')
   @ApiOkResponse({ description: 'The record has been successfully updated.' })
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: { user: User },
+  ) {
+    return this.usersService.update(+id, updateUserDto, req.user);
   }
 
+  @UseGuards(JWTAuthGuard)
   @Delete(':id')
   @ApiNoContentResponse({
     description: 'The record has been successfully deleted.',
   })
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  remove(@Param('id') id: string, @Req() req: { user: User }) {
+    return this.usersService.remove(+id, req.user);
   }
 }

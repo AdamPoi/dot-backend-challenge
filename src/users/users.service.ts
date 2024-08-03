@@ -58,13 +58,19 @@ export class UsersService {
     return user;
   }
 
-  async update(id: number, dto: UpdateUserDto): Promise<User> {
+  async update(
+    id: number,
+    dto: UpdateUserDto,
+    currentUser: User,
+  ): Promise<User> {
+    if (currentUser.id != id)
+      throw new UnauthorizedException('You can only update your account');
     if (typeof dto.username != 'undefined') {
       const existingUser = await this.usersRepository.findOne({
         where: { username: dto.username },
       });
 
-      if (existingUser.username !== dto.username) {
+      if (existingUser && existingUser.username !== dto.username) {
         throw new UnauthorizedException('Username already exists');
       }
     }
@@ -72,14 +78,21 @@ export class UsersService {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
 
+    if (dto.password) {
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      dto.password = hashedPassword;
+    }
     Object.assign(user, { ...dto });
     await this.usersRepository.save(user);
     return user;
   }
 
-  async remove(id: number): Promise<User> {
+  async remove(id: number, currentUser: User): Promise<User> {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
+    if (currentUser.id !== user.id)
+      throw new UnauthorizedException('You can only delete your account');
     await this.usersRepository.delete(id);
     throw new HttpException('User deleted successfully', HttpStatus.NO_CONTENT);
   }
