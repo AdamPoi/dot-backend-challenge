@@ -1,19 +1,27 @@
 import { Exclude } from 'class-transformer';
-import { IsNotEmpty, IsString } from 'class-validator';
-import { Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ unique: true })
-  @IsString()
-  @IsNotEmpty()
   username: string;
 
   @Exclude()
   @Column()
-  @IsString()
-  @IsNotEmpty()
   password: string;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }
