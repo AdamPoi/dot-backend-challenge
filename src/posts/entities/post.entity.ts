@@ -19,12 +19,10 @@ export class Post {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'bigint', name: 'user_id' })
-  userId: number;
-
-  @Exclude()
-  @ManyToOne(() => User, { onUpdate: 'CASCADE', onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, (user) => user.posts, {
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
   user: User;
 
   constructor(partial: Partial<Post>) {
