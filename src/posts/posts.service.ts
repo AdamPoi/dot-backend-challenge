@@ -1,26 +1,87 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { DataSource } from 'typeorm';
+import { Post } from './entities/post.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class PostsService {
-  create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
+  private postsRepository;
+  constructor(private dataSource: DataSource) {
+    this.postsRepository = this.dataSource.getRepository(Post);
   }
 
-  findAll() {
-    return `This action returns all posts`;
+  async create(dto: CreatePostDto, currentUser: User) {
+    let post = await this.postsRepository.save({
+      ...dto,
+      user: currentUser,
+    });
+    delete post.user;
+    return post;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
+  async findAll(): Promise<Post[]> {
+    return this.postsRepository.find();
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
+  async findAllByUser(userId: Number): Promise<Post[]> {
+    return this.postsRepository.find({
+      where: {
+        user: { id: userId },
+      },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async findOne(id: number, currentUser: User): Promise<Post> {
+    const post = await this.postsRepository.findOne({
+      where: { id, user: { id: currentUser.id } },
+      loadRelationIds: true,
+    });
+    if (!post) throw new NotFoundException('Post not found');
+    if (post.user != currentUser.id)
+      throw new UnauthorizedException('Unauthorized access to resource');
+    return post;
+  }
+
+  async update(
+    id: number,
+    dto: UpdatePostDto,
+    currentUser: User,
+  ): Promise<Post> {
+    const post = await this.postsRepository.findOne({
+      where: { id, user: { id: currentUser.id } },
+      loadRelationIds: true,
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    if (post.user != currentUser.id)
+      throw new UnauthorizedException('Unauthorized access to resource');
+
+    Object.assign(post, {
+      ...dto,
+    });
+    await this.postsRepository.save(post);
+    return post;
+  }
+
+  async remove(id: number, currentUser: User): Promise<Post> {
+    const post = await this.postsRepository.findOne({
+      where: { id, user: { id: currentUser.id } },
+      loadRelationIds: true,
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    if (post.user != currentUser.id)
+      throw new UnauthorizedException('Unauthorized access to resource');
+
+    await this.postsRepository.delete(id);
+    throw new HttpException('Post deleted successfully', HttpStatus.NO_CONTENT);
   }
 }
