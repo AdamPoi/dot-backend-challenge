@@ -1,26 +1,79 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './entities/user.entity';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  private usersRepository;
+  constructor(private dataSource: DataSource) {
+    this.usersRepository = this.dataSource.getRepository(User);
+  }
+  async create(dto: CreateUserDto) {
+    const existingUser = await this.usersRepository.findOne({
+      where: { username: dto.username },
+    });
+    if (existingUser) {
+      throw new NotAcceptableException('Username already exists');
+    }
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    return this.usersRepository.save({ ...dto, password: hashedPassword });
   }
 
   findAll() {
-    return `This action returns all users`;
+    return this.usersRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number): Promise<User> {
+    const user = await this.usersRepository.findOneBy(id);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async findOneByField(
+    fieldValue: number | string,
+    fieldName: string = 'id',
+  ): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { [fieldName]: fieldValue },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async update(id: number, dto: UpdateUserDto): Promise<User> {
+    if (typeof dto.username != 'undefined') {
+      const existingUser = await this.usersRepository.findOne({
+        where: { username: dto.username },
+      });
+
+      if (existingUser.username !== dto.username) {
+        throw new UnauthorizedException('Username already exists');
+      }
+    }
+
+    const user = await this.findOne(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    Object.assign(user, { ...dto });
+    console.log(user);
+    await this.usersRepository.save(user);
+    return user;
+  }
+
+  async remove(id: number): Promise<User> {
+    const user = await this.findOne(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.usersRepository.delete(id);
+    return user;
   }
 }
