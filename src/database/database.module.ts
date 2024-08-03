@@ -1,4 +1,4 @@
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { Global, Module } from '@nestjs/common';
 import { join } from 'path';
@@ -18,9 +18,9 @@ import { join } from 'path';
             port: configService.get('DB_PORT'),
             username: configService.get('DB_USERNAME'),
             password: configService.get('DB_PASSWORD'),
-            database: configService.get('DB_NAME'),
+            database: configService.get('DB_DATABASE'),
             synchronize: true,
-            entities: [join(__dirname, '../', '**', '*.entity.{ts,js}')],
+            entities: [__dirname + '/../**/*.entity.js'],
           });
           await dataSource.initialize();
           console.log('Database successfully connected');
