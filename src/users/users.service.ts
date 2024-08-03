@@ -1,4 +1,6 @@
 import {
+  HttpException,
+  HttpStatus,
   Injectable,
   NotAcceptableException,
   NotFoundException,
@@ -24,8 +26,15 @@ export class UsersService {
     }
     const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    return this.usersRepository.save({ ...dto, password: hashedPassword });
+    return this.usersRepository
+      .save({
+        ...dto,
+        password: hashedPassword,
+      })
+      .then((user) => {
+        const { password, ...result } = user;
+        return result;
+      });
   }
 
   findAll() {
@@ -33,7 +42,7 @@ export class UsersService {
   }
 
   async findOne(id: number): Promise<User> {
-    const user = await this.usersRepository.findOneBy(id);
+    const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
@@ -64,7 +73,6 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
 
     Object.assign(user, { ...dto });
-    console.log(user);
     await this.usersRepository.save(user);
     return user;
   }
@@ -72,8 +80,7 @@ export class UsersService {
   async remove(id: number): Promise<User> {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
-
     await this.usersRepository.delete(id);
-    return user;
+    throw new HttpException('User deleted successfully', HttpStatus.NO_CONTENT);
   }
 }
