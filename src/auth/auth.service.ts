@@ -29,12 +29,11 @@ export class AuthService {
       loginDto.username,
       'username',
     );
-    if (!user)
-      throw new NotAcceptableException('Incorrect username and password');
+    if (!user) throw new NotAcceptableException('Invalid credentials');
 
     const bcrypt = require('bcrypt');
     if (!(await bcrypt.compare(loginDto.password, user.password)))
-      throw new NotAcceptableException('Incorrect username and password');
+      throw new NotAcceptableException('Invalid credentials');
 
     return {
       user,
