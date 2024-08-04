@@ -12,6 +12,8 @@ describe('PostsController (e2e)', () => {
   let app: INestApplication;
   let jwtToken: string;
   let dataSource: DataSource;
+  let currentUser: User;
+
   const mockUser: CreateUserDto = {
     username: 'testpost',
     password: '12345',
@@ -30,30 +32,28 @@ describe('PostsController (e2e)', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
+    await dataSource.createQueryBuilder().delete().from(User).execute();
+    await dataSource.createQueryBuilder().delete().from(Post).execute();
     await request(app.getHttpServer())
       .post(`/auth/register`)
       .send(mockUser)
       .expect(HttpStatus.CREATED);
+
+    await request(app.getHttpServer())
+      .post(`/auth/login`)
+      .send(mockUser)
+      .expect(HttpStatus.OK)
+      .expect((res) => {
+        jwtToken = res.body.accessToken;
+        currentUser = res.body.user;
+      });
   });
 
   afterAll(async () => {
-    dataSource = app.get(DataSource);
-    await dataSource.createQueryBuilder().delete().from(User).execute();
-    // await Promise.all([app.close()]);
-  });
-
-  afterEach(async () => {
-    await dataSource.createQueryBuilder().delete().from(Post).execute();
+    await Promise.all([app.close()]);
   });
 
   it('/posts (POST)', async () => {
-    const loginResponse = await request(app.getHttpServer())
-      .post(`/auth/login`)
-      .send(mockUser)
-      .expect(HttpStatus.OK);
-
-    jwtToken = loginResponse.body.accessToken;
-
     await request(app.getHttpServer())
       .post(`/posts`)
       .set('Authorization', `Bearer ${jwtToken}`)
@@ -71,12 +71,9 @@ describe('PostsController (e2e)', () => {
       .into(Post)
       .values([
         {
-          title: 'test title',
-          content: 'test content',
-        },
-        {
           title: 'test title 2',
           content: 'test content 2',
+          user: currentUser,
         },
       ])
       .execute();
@@ -110,13 +107,6 @@ describe('PostsController (e2e)', () => {
   });
 
   it('/posts/:id (PATCH)', async () => {
-    const loginResponse = await request(app.getHttpServer())
-      .post(`/auth/login`)
-      .send(mockUser)
-      .expect(HttpStatus.OK);
-
-    jwtToken = loginResponse.body.accessToken;
-
     const postResponse = await request(app.getHttpServer())
       .post(`/posts`)
       .set('Authorization', `Bearer ${jwtToken}`)
@@ -136,13 +126,6 @@ describe('PostsController (e2e)', () => {
   });
 
   it('/posts/:id (DELETE)', async () => {
-    const loginResponse = await request(app.getHttpServer())
-      .post(`/auth/login`)
-      .send(mockUser)
-      .expect(HttpStatus.OK);
-
-    jwtToken = loginResponse.body.accessToken;
-
     const postResponse = await request(app.getHttpServer())
       .post(`/posts`)
       .set('Authorization', `Bearer ${jwtToken}`)

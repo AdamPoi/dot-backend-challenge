@@ -23,11 +23,11 @@ describe('AuthController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     dataSource = app.get(DataSource);
+    await dataSource.createQueryBuilder().delete().from(User).execute();
   });
 
   afterAll(async () => {
-    await dataSource.createQueryBuilder().delete().from(User).execute();
-    // await Promise.all([app.close()]);
+    await Promise.all([app.close()]);
   });
 
   it('/auth/register (POST)', async () => {
