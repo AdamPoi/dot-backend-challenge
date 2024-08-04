@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  HttpCode,
   Post,
   UseInterceptors,
 } from '@nestjs/common';
@@ -28,6 +29,7 @@ export class AuthController {
     return this.authService.register(createUserDto);
   }
   @Post('login')
+  @HttpCode(200)
   @ApiOkResponse({ type: Auth })
   @ApiNotAcceptableResponse({ description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto): Promise<Auth> {
