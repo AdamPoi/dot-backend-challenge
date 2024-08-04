@@ -59,7 +59,6 @@ export class PostsService {
       loadRelationIds: true,
     });
     if (!post) throw new NotFoundException('Post not found');
-    console.log(post.user, currentUser.id);
     if (post.user != currentUser.id)
       throw new UnauthorizedException('Unauthorized access to resource');
 
