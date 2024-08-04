@@ -39,14 +39,13 @@ export class PostsService {
     });
   }
 
-  async findOne(id: number, currentUser: User): Promise<Post> {
+  async findOne(id: number): Promise<Post> {
     const post = await this.postsRepository.findOne({
-      where: { id, user: { id: currentUser.id } },
+      where: { id },
       loadRelationIds: true,
     });
     if (!post) throw new NotFoundException('Post not found');
-    if (post.user != currentUser.id)
-      throw new UnauthorizedException('Unauthorized access to resource');
+
     return post;
   }
 

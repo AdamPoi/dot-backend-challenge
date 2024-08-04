@@ -27,13 +27,13 @@ import {
 } from '@nestjs/swagger';
 
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JWTAuthGuard)
 @ApiTags('posts')
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
+  @UseGuards(JWTAuthGuard)
   @ApiCreatedResponse({ type: Post })
   @ApiBody({ type: CreatePostDto })
   create(@Body() createPostDto: CreatePostDto, @Req() req: { user: User }) {
@@ -41,6 +41,7 @@ export class PostsController {
   }
   @Get()
   @ApiOkResponse({ type: [Post] })
+  @UseGuards()
   findAll() {
     return this.postsService.findAll();
   }
@@ -54,12 +55,12 @@ export class PostsController {
   @Get(':id')
   @ApiOkResponse({ type: Post })
   @ApiNotFoundResponse({ description: 'Post not found' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized access to resource' })
-  findOne(@Param('id') id: number, @Req() req: { user: User }) {
-    return this.postsService.findOne(id, req.user);
+  findOne(@Param('id') id: number) {
+    return this.postsService.findOne(id);
   }
 
   @Patch(':id')
+  @UseGuards(JWTAuthGuard)
   @ApiOkResponse({ type: Post })
   @ApiNotFoundResponse({ description: 'Post not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized access to resource' })
@@ -73,6 +74,7 @@ export class PostsController {
   }
 
   @Delete(':id')
+  @UseGuards(JWTAuthGuard)
   @ApiOkResponse({ status: 204 })
   @ApiNotFoundResponse({ description: 'Post not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized access to resource' })
