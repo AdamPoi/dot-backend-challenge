@@ -55,11 +55,11 @@ export class PostsService {
     currentUser: User,
   ): Promise<Post> {
     const post = await this.postsRepository.findOne({
-      where: { id, user: { id: currentUser.id } },
+      where: { id },
       loadRelationIds: true,
     });
     if (!post) throw new NotFoundException('Post not found');
-
+    console.log(post.user, currentUser.id);
     if (post.user != currentUser.id)
       throw new UnauthorizedException('Unauthorized access to resource');
 
@@ -72,7 +72,7 @@ export class PostsService {
 
   async remove(id: number, currentUser: User): Promise<Post> {
     const post = await this.postsRepository.findOne({
-      where: { id, user: { id: currentUser.id } },
+      where: { id },
       loadRelationIds: true,
     });
     if (!post) throw new NotFoundException('Post not found');
