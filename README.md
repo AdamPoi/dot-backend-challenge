@@ -24,7 +24,7 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+[Nest JS](https://github.com/nestjs/nest) project for challenge of DOT Indonesia internship program for backend developer. In this project I use several pattern like DTO for maping data & consistent dat structure. I also Service pattern for separate between business logic and database operation and Nest JS already implement some pattern like Dependency Injection, Guard, Interceptor, etc. I use Typeorm as ORM using mysql as database and Swagger for API documentation.
 
 ## Installation
 
