@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { Global, Module } from '@nestjs/common';
-import { join } from 'path';
+import { Global, Logger, Module } from '@nestjs/common';
 
 @Global()
 @Module({
@@ -11,6 +10,7 @@ import { join } from 'path';
       provide: DataSource,
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
+        const logger = new Logger('DatabaseModule');
         try {
           const dataSource = new DataSource({
             type: 'mysql',
@@ -18,15 +18,19 @@ import { join } from 'path';
             port: configService.get('DB_PORT'),
             username: configService.get('DB_USERNAME'),
             password: configService.get('DB_PASSWORD'),
-            database: configService.get('DB_DATABASE'),
+            database:
+              configService.get('NODE_ENV') === 'test'
+                ? configService.get('DB_TEST_DATABASE')
+                : configService.get('DB_DATABASE'),
             synchronize: true,
-            entities: [__dirname + '/../**/*.entity.js'],
+            // dropSchema: configService.get('NODE_ENV') === 'test',
+            entities: [__dirname + '/../**/*.entity{.ts,.js}'],
           });
           await dataSource.initialize();
-          console.log('Database successfully connected');
+          logger.log('Database successfully connected');
           return dataSource;
         } catch (error) {
-          console.log('Error connecting to database');
+          logger.error('Error connecting to database');
           throw error;
         }
       },
