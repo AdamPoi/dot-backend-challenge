@@ -23,8 +23,8 @@ import { Global, Logger, Module } from '@nestjs/common';
                 ? configService.get('DB_TEST_DATABASE')
                 : configService.get('DB_DATABASE'),
             synchronize: true,
-            // dropSchema: configService.get('NODE_ENV') === 'test',
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+            migrations: [__dirname + '/migrations/*{.ts,.js}'],
           });
           await dataSource.initialize();
           logger.log('Database successfully connected');
